@@ -1,0 +1,23 @@
+BUILD THE APK USING ONLY AN ANDROID PHONE (NO PC)
+
+This project includes a GitHub Actions workflow. GitHub's cloud runner will compile the app and Android Gradle will sign the debug APK automatically. The resulting APK is installable by sideloading on your Android phone.
+
+1. On your Android phone, open https://github.com in Chrome and sign in (or create a free account).
+2. Create a NEW PUBLIC or PRIVATE repository named MarineTransferCalculator. A private repository is recommended.
+3. Extract this project ZIP on your phone using your file manager / ZIP app.
+4. Upload the CONTENTS of the extracted MarineTransferCalculatorAndroid folder to the root of the GitHub repository. Make sure the .github/workflows/build-apk.yml file is included. If your file manager hides dot-folders, enable hidden files and ensure .github is uploaded.
+5. Commit the uploaded files. GitHub Actions should start automatically. If not, open the repository's Actions tab, select “Build Marine Transfer Calculator APK”, and tap “Run workflow”.
+6. Wait for the workflow to finish with a green check mark.
+7. Open that completed workflow run, scroll to Artifacts, and download “Marine-Transfer-Calculator-APK”.
+8. Extract the downloaded artifact ZIP and tap app-debug.apk. Allow Chrome or Files to install unknown apps if Android asks, then install.
+
+SIGNING INFORMATION
+- The APK is signed with Android's automatically generated debug signing key. This is sufficient for direct installation/testing on your phone.
+- It is NOT a Play Store release signature. A production release should use a private keystore owned and backed up by you, stored securely as GitHub Actions secrets. Never share your keystore or passwords in chat or commit them to the repository.
+- If you later build another debug APK using a different cloud runner key, Android may require uninstalling the previous app before installing the new one. Back up any data first; this calculator currently stores no transfer history.
+
+APP DETAILS
+Name: Marine Transfer Calculator
+Package: com.marine.transfercalculator
+Minimum Android: 8.0 (API 26)
+Offline: Yes; calculator is bundled inside the app.

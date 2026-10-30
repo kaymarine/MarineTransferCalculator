@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#102b46">
+<title>Marine Transfer Calculator</title>
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{--navy:#102b46;--blue:#1769aa;--bg:#f2f5f8;--ink:#172536;--muted:#637487;--line:#dce4ec;--green:#16794a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink)}
+header{background:linear-gradient(135deg,#102b46,#174f79);color:#fff;padding:25px 20px 30px}
+header .tag{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;opacity:.8;font-weight:700}
+header h1{font-size:24px;margin:7px 0 4px}header p{margin:0;color:#d7e7f4;font-size:14px}
+main{max-width:620px;margin:-15px auto 30px;padding:0 14px}
+.panel{background:#fff;border-radius:16px;padding:18px;margin-bottom:14px;box-shadow:0 5px 18px #132b4210}
+h2{font-size:16px;margin:0 0 15px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+label{display:block;font-size:12px;color:var(--muted);font-weight:650;margin:0 0 6px}
+input,select{width:100%;border:1px solid var(--line);border-radius:10px;padding:12px;font-size:16px;background:#fff;color:var(--ink);min-width:0}
+input:focus,select:focus{outline:2px solid #9cc9ed;border-color:var(--blue)}
+.field{margin-bottom:13px}.field:last-child{margin-bottom:0}
+button{border:0;border-radius:10px;padding:13px 16px;font-size:15px;font-weight:700;cursor:pointer}
+.primary{background:var(--blue);color:#fff;width:100%}.secondary{background:#eaf1f7;color:var(--navy)}
+.result{background:#102b46;color:white;border-radius:16px;padding:19px;margin-bottom:14px}
+.result .eyebrow{font-size:12px;color:#b9d3e7;text-transform:uppercase;letter-spacing:1px;font-weight:700}
+.big{font-size:34px;line-height:1.2;font-weight:800;margin:8px 0 3px;letter-spacing:-1px}
+.sub{font-size:13px;color:#d0dfeb}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:17px}
+.stat{background:#ffffff12;border:1px solid #ffffff20;padding:11px;border-radius:10px}
+.stat small{display:block;color:#b9d3e7;font-size:11px}.stat strong{font-size:17px;display:block;margin-top:3px}
+.actions{display:flex;gap:10px}.actions button{flex:1}
+.note{font-size:12px;color:var(--muted);line-height:1.5;margin:10px 2px}
+footer{text-align:center;color:var(--muted);font-size:11px;padding:10px}
+@media(max-width:420px){.grid{grid-template-columns:1fr}.big{font-size:30px}}
+</style>
+</head>
+<body>
+<header><div class="tag">Shipboard utility</div><h1>Marine Transfer Calculator</h1><p>Estimate liquid receiving and transfer completion time.</p></header>
+<main>
+<section class="panel">
+<h2>Transfer details</h2>
+<div class="field"><label for="product">Product / operation</label><input id="product" value="AGO receiving" placeholder="e.g. AGO, diesel, fresh water"></div>
+<div class="grid">
+<div class="field"><label for="quantity">Total quantity (litres)</label><input id="quantity" type="number" min="0" step="any" value="50000"></div>
+<div class="field"><label for="flow">Flow rate</label><input id="flow" type="number" min="0" step="any" value="68"></div>
+</div>
+<div class="field"><label for="unit">Flow-rate unit</label><select id="unit"><option value="m3h">m³/hour</option><option value="lmin">Litres/minute</option><option value="lh">Litres/hour</option></select></div>
+<div class="field"><label for="received">Quantity already received (litres) — optional</label><input id="received" type="number" min="0" step="any" value="0"></div>
+<button class="primary" id="calculate">Calculate completion time</button>
+</section>
+<section class="result" aria-live="polite">
+<div class="eyebrow">Estimated remaining time</div>
+<div class="big" id="remainingTime">44 min 7 sec</div>
+<div class="sub" id="completion">Total transfer: 44 min 7 sec</div>
+<div class="stats">
+<div class="stat"><small>Flow rate</small><strong id="flowDisplay">68,000 L/hr</strong></div>
+<div class="stat"><small>Remaining quantity</small><strong id="remainingQty">50,000 L</strong></div>
+<div class="stat"><small>Elapsed equivalent</small><strong id="elapsed">0 min</strong></div>
+<div class="stat"><small>Estimated finish</small><strong id="finish">—</strong></div>
+</div>
+</section>
+<section class="panel">
+<h2>Quick actions</h2>
+<div class="actions"><button class="secondary" id="reset">Reset</button><button class="secondary" id="share">Share result</button></div>
+<p class="note">Calculation assumes a constant flow rate. Actual completion time may vary due to pump performance, line pressure, hose restrictions, tank changeover and topping-up.</p>
+</section>
+<footer>Marine Transfer Calculator • Works offline after first load</footer>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const fmt=n=>new Intl.NumberFormat(undefined,{maximumFractionDigits:1}).format(n);
+function duration(sec){
+ if(!Number.isFinite(sec)||sec<0)return "—";
+ sec=Math.round(sec);const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;
+ return [h?`${h} hr`:null,m?`${m} min`:null,(!h&&!m)||s?`${s} sec`:null].filter(Boolean).join(" ");
+}
+function calculate(){
+ const total=Number($("quantity").value), rawFlow=Number($("flow").value), received=Math.max(0,Number($("received").value)||0);
+ const unit=$("unit").value;
+ const flow=unit==="m3h"?rawFlow*1000:unit==="lmin"?rawFlow*60:rawFlow;
+ if(!(total>0)||!(flow>0)){ $("remainingTime").textContent="Enter valid values";$("completion").textContent="Quantity and flow rate must be greater than zero.";return; }
+ const remaining=Math.max(0,total-received), totalSec=total/flow*3600, remSec=remaining/flow*3600, elapsedSec=Math.min(received,total)/flow*3600;
+ const finish=new Date(Date.now()+remSec*1000);
+ $("remainingTime").textContent=duration(remSec);
+ $("completion").textContent=`Total transfer: ${duration(totalSec)} • ${$("product").value||"Transfer"}`;
+ $("flowDisplay").textContent=`${fmt(flow)} L/hr`;
+ $("remainingQty").textContent=`${fmt(remaining)} L`;
+ $("elapsed").textContent=duration(elapsedSec);
+ $("finish").textContent=remaining===0?"Completed":finish.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
+}
+$("calculate").addEventListener("click",calculate);
+$("reset").addEventListener("click",()=>{$("product").value="AGO receiving";$("quantity").value="50000";$("flow").value="68";$("unit").value="m3h";$("received").value="0";calculate();});
+$("share").addEventListener("click",async()=>{
+ const txt=`${$("product").value}\nTotal: ${$("quantity").value} L\nFlow: ${$("flow").value} ${$("unit").selectedOptions[0].text}\nRemaining time: ${$("remainingTime").textContent}\n${$("completion").textContent}`;
+ if(navigator.share){try{await navigator.share({title:"Marine Transfer Estimate",text:txt})}catch(e){}}
+ else if(navigator.clipboard){await navigator.clipboard.writeText(txt);$("share").textContent="Copied!";setTimeout(()=>$("share").textContent="Share result",1500)}
+});
+["quantity","flow","unit","received","product"].forEach(id=>$(id).addEventListener("input",calculate));
+calculate();
+if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("./sw.js").catch(()=>{});
+</script>
+</body></html>
